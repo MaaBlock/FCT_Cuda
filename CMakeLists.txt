@@ -1,7 +1,19 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 include(platform/platform.cmake)
-include(../Config/set_utf8_compiler_encoding.cmake OPTIONAL)
+include(../../Config/set_utf8_compiler_encoding.cmake OPTIONAL)
+
+if(MSVC AND MSVC_VERSION GREATER_EQUAL 1940 AND DEFINED ENV{CUDA_PATH_V13_0})
+    file(TO_CMAKE_PATH "$ENV{CUDA_PATH_V13_0}" _cuda_v13_root)
+    if(EXISTS "${_cuda_v13_root}/bin/nvcc.exe")
+        set(CUDAToolkit_ROOT "${_cuda_v13_root}" CACHE PATH "CUDA Toolkit root directory" FORCE)
+        set(CMAKE_CUDA_COMPILER "${_cuda_v13_root}/bin/nvcc.exe" CACHE FILEPATH "CUDA compiler" FORCE)
+    endif()
+endif()
+
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES OR CMAKE_CUDA_ARCHITECTURES STREQUAL "52")
+    set(CMAKE_CUDA_ARCHITECTURES "89" CACHE STRING "CUDA architectures" FORCE)
+endif()
 
 find_package(CUDAToolkit REQUIRED)
 enable_language(CUDA)
@@ -69,47 +81,3 @@ function(target_link_fct_cuda_libraries target_name)
     target_link_libraries(${target_name} FCT_Cuda)
 endfunction()
 
-if(FCT_CUDA_BUILD_EXAMPLES)
-    set(FCT_CUDA_EXAMPLE_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/example/main.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/example/HomeLbm3DPass.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/example/HomeLbm3DPass.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/example/HomeLbm3DSolver.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/example/HomeLbm3DSolver.cu"
-        "${CMAKE_CURRENT_SOURCE_DIR}/example/msvc_stl_shims.cpp"
-    )
-
-    add_executable(fct_cuda_homelbm_3d_example
-        ${FCT_CUDA_EXAMPLE_SOURCES}
-    )
-
-    if(COMMAND set_utf8_for_target)
-        set_utf8_for_target(fct_cuda_homelbm_3d_example)
-    endif()
-
-    if(MSVC)
-        target_compile_options(fct_cuda_homelbm_3d_example PRIVATE
-            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/utf-8>
-            $<$<COMPILE_LANGUAGE:CXX>:/utf-8>
-        )
-    endif()
-
-    set_target_properties(fct_cuda_homelbm_3d_example PROPERTIES
-        CUDA_STANDARD 20
-        CUDA_STANDARD_REQUIRED ON
-        CXX_STANDARD 20
-        CXX_STANDARD_REQUIRED ON
-    )
-
-    target_include_directories(fct_cuda_homelbm_3d_example PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/example
-    )
-
-    target_link_libraries(fct_cuda_homelbm_3d_example PRIVATE
-        FCT
-        FCT_Cuda
-    )
-
-
-endif()
