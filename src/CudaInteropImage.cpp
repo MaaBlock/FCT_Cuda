@@ -40,6 +40,7 @@ namespace FCT::Cuda {
     }
 
     Status CudaInteropImage::initialize(InteropMode mode) {
+        ZoneScoped();
         if (!m_image) {
             return InvalidArgumentError("Cannot initialize CudaInteropImage with null FCT::Image!");
         }
@@ -174,6 +175,7 @@ namespace FCT::Cuda {
     }
 
     Status CudaInteropImage::copyToFctImage(cudaStream_t stream) {
+        ZoneScoped();
         if (!m_deviceData || !m_image) {
             return FailedPreconditionError("Cannot copy unallocated buffer to FCT::Image!");
         }
@@ -222,6 +224,7 @@ namespace FCT::Cuda {
         const void* srcData,
         size_t dataSize,
         cudaStream_t stream) {
+        ZoneScoped();
         if (!m_deviceData) {
             return FailedPreconditionError("Device buffer unallocated!");
         }

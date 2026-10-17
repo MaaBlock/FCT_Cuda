@@ -58,6 +58,8 @@ namespace FCT::Cuda {
     }
 
     Status CudaPass::dispatch(CudaStream& stream) {
+        ZoneScoped();
+        ZoneName(m_name.c_str(), m_name.size());
         cudaStream_t s = stream.get();
 
         for (auto& [name, interopImg] : m_inputs) {
